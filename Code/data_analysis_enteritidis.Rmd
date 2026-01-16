@@ -1,0 +1,446 @@
+---
+title: '202601 Salmonella Enteritidis cluster - PHESS 320266203890'
+output: 
+  html_document: 
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    code_folding: none
+knit: (function(input, ...) {
+  rmarkdown::render(input, output_file = paste0("Salmonella Enteritidis cluster ", Sys.Date()), output_dir = "../Output") })
+---
+
+```{css, echo = FALSE}
+/* */ 
+h1.title {
+  font-weight: bold;
+  font-size: 20px;
+  color: #191d43;
+}
+
+h1 {
+  font-weight: bold;
+  font-size: 16px;
+  color: #5bc788;
+}
+
+h2 {
+  font-weight: bold;
+  font-size: 14px;
+  color: #5bc788;
+}
+
+h3 {
+  font-style: italic;
+  font-size: 12px;
+}
+
+body {
+  font-size: 14px;
+}
+```
+
+
+```{r, echo = FALSE, message = FALSE}
+#
+knitr::opts_chunk$set(echo    = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE)
+
+options(knitr.kable.NA = '--')
+
+here::i_am("Code/data_analysis_enteritidis.Rmd")
+```
+
+
+```{r}
+# Install the pacman package if you don't already have it
+if (!require("pacman")) install.packages("pacman")
+
+pacman::p_load(tidyverse,
+               janitor,
+               lubridate,
+               hms,
+               reshape2,
+               knitr,
+               kableExtra,
+               RColorBrewer,
+               apyramid,
+               ggnewscale)
+```
+
+
+```{r}
+# Date of report generation
+datetime_update <- paste0("data as of ", format(Sys.Date(), format = "%d/%m/%Y"))
+
+# Start date for outbreak
+date_outbreak_start <- lubridate::ymd("2025-12-19")
+
+# x-axis limits for epi curves
+date_epicurve_start <- lubridate::ymd(date_outbreak_start - days(3))
+date_epicurve_end   <- Sys.Date() + 1
+
+# NEPHU colours
+nephu_blue   <- "#374091"
+nephu_green  <- "#5BC788"
+nephu_peach  <- "#FFA78C"
+nephu_yellow <- "#FFF694"
+```
+
+
+```{r}
+# Read in linelist
+linelist_raw <- readxl::read_xlsx(paste0(here::here(), "/Data/linelist_enteritidis.xlsx"),
+                                  guess_max = min(100000, Inf)) %>% 
+  #
+  janitor::clean_names()
+```
+
+
+```{r}
+# 
+linelist_clean <- linelist_raw %>%
+  dplyr::mutate(
+    symptom_onset_date = lubridate::ymd(symptom_onset_date),
+    symptom_end_date   = lubridate::ymd(symptom_end_date),
+    #
+    symptom_end_date = dplyr::case_when(
+      is.na(symptom_end_date) ~ lubridate::ymd(Sys.Date()),
+      TRUE ~ symptom_end_date),
+    #
+    consumed_food_18th = lubridate::ymd(consumed_food_18th),
+    consumed_food_19th = lubridate::ymd(consumed_food_19th),
+    #
+    age_group = factor(dplyr::case_when(
+      age < 10  ~ "0-9 years",
+      age < 20  ~ "10-19 years",
+      age < 30  ~ "20-29 years",
+      age < 40  ~ "30-39 years",
+      age < 50  ~ "40-49 years",
+      age < 60  ~ "50-59 years",
+      age < 70  ~ "60-69 years",
+      age < 80  ~ "70-79 years",
+      age < 90  ~ "80-89 years",
+      age >= 90 ~ "90+ years",
+      TRUE ~ "Not stated"),
+      levels = c("0-9 years",
+                 "10-19 years",
+                 "20-29 years",
+                 "30-39 years",
+                 "40-49 years",
+                 "50-59 years",
+                 "60-69 years",
+                 "70-79 years",
+                 "80-89 years",
+                 "90+ years",
+                 "Not stated")),
+    #
+    sex = factor(sex,
+                 levels = c("Male",
+                            "Female")),
+    #
+    link_to_carrical = factor(link_to_carrical,
+                              levels = c("Resident",
+                                         "Staff",
+                                         "Donated food",
+                                         "No link identified")),
+    #
+    hospitalised = factor(hospitalised,
+                          levels = c("Yes",
+                                     "No")),
+    #
+    deceased = factor(deceased,
+                      levels = c("Yes",
+                                 "No")))
+```
+
+# Epicurves
+
+**Number of people reporting symptoms, by symptom onset date and association with Carrical House, `r datetime_update`**
+
+```{r, warning = FALSE}
+#
+linelist_clean %>%
+  dplyr::filter(!is.na(symptom_onset_date)) %>%
+  #
+  ggplot() +
+  #
+  geom_histogram(aes(x = symptom_onset_date, fill = link_to_carrical),
+                 color    = "black",
+                 alpha    = 1,
+                 binwidth = 1) +
+  #
+  scale_x_date(date_breaks = "2 day",
+               date_labels = "%d-%b") +
+  #
+  coord_cartesian(xlim = c(date_epicurve_start, date_epicurve_end)) +
+  #
+  scale_y_continuous(limits = c(0, NA),
+                     breaks = scales::breaks_width(1),
+                     expand = expansion(add = c(0, 1.1))) +
+  #
+  scale_fill_manual(values = c(nephu_blue, nephu_green, nephu_peach, nephu_yellow)) +
+  #
+  labs(title = " ",
+       x     = "Symptom onset date",
+       y     = "Number of cases",
+       fill  = "Carrical House: ") +
+  #
+  theme_classic() +
+  #
+  theme(axis.title  = element_text(size = 9),
+        axis.text   = element_text(size = 8),
+        axis.text.x = element_text(angle = 90,
+                                   vjust = 0.5,
+                                   hjust = 1),
+        #
+        axis.title.x = element_text(margin = margin(10, 0, 0, 0)),
+        axis.title.y = element_text(margin = margin(0, 10, 0, 0)),
+        #
+        plot.margin = margin(5, 5, 0, 5),
+        #
+        legend.position = "bottom",
+        legend.title    = element_text(size = 9))
+```
+
+**Number of people reporting symptoms, by symptom onset date and case classification, `r datetime_update`**
+
+```{r, warning = FALSE}
+#
+linelist_clean %>%
+  dplyr::filter(!is.na(symptom_onset_date)) %>%
+  #
+  ggplot() +
+  #
+  geom_histogram(aes(x = symptom_onset_date, fill = classification),
+                 color    = "black",
+                 alpha    = 1,
+                 binwidth = 1) +
+  #
+  scale_x_date(date_breaks = "2 day",
+               date_labels = "%d-%b") +
+  #
+  coord_cartesian(xlim = c(date_epicurve_start, date_epicurve_end)) +
+  #
+  scale_y_continuous(limits = c(0, NA),
+                     breaks = scales::breaks_width(1),
+                     expand = expansion(add = c(0, 1.1))) +
+  #
+  scale_fill_manual(values = c("#9DBB61", "#4BACC6")) +
+  #
+  labs(title = " ",
+       x     = "Symptom onset date",
+       y     = "Number of cases") +
+  #
+  theme_classic() +
+  #
+  theme(axis.title  = element_text(size = 9),
+        axis.text   = element_text(size = 8),
+        axis.text.x = element_text(angle = 90,
+                                   vjust = 0.5,
+                                   hjust = 1),
+        #
+        axis.title.x = element_text(margin = margin(10, 0, 0, 0)),
+        axis.title.y = element_text(margin = margin(0, 10, 0, 0)),
+        #
+        plot.margin = margin(5, 5, 0, 5),
+        #
+        legend.position = "bottom",
+        legend.title    = element_blank())
+```
+
+# Swimlane plot
+
+**Swimlane plot of confirmed and suspected *Salmonella* Enteritidis cases, `r datetime_update`**
+
+```{r}
+#
+linelist_clean %>% 
+  ggplot() +
+  #
+  geom_segment(aes(x    = symptom_onset_date - 6, 
+                   xend = symptom_onset_date, 
+                   y    = forcats::fct_reorder(case_id, symptom_onset_date), 
+                   yend = forcats::fct_reorder(case_id, symptom_onset_date),
+                   col  = "Acquisition period"),
+               linewidth = 5) +
+  #
+  geom_segment(aes(x    = symptom_onset_date, 
+                   xend = symptom_end_date + 0.25, 
+                   y    = forcats::fct_reorder(case_id, symptom_onset_date), 
+                   yend = forcats::fct_reorder(case_id, symptom_onset_date),
+                   col  = "Symptom duration (approx.)"),
+               linewidth = 5) +
+  #
+  scale_color_manual(name   = NULL,
+                     labels = c("Acquisition period", "Symptom duration (approx.)"),
+                     values = c("lightblue", "#ffa78c")) +
+  #
+  ggnewscale::new_scale_color() +
+  #
+  geom_point(aes(x     = consumed_food_18th,
+                 y     = case_id,
+                 col   = "Attended Christmas party",
+                 shape = "Attended Christmas party"),
+             size   = 2,
+             stroke = 2) +
+  #
+  geom_point(aes(x     = consumed_food_19th,
+                 y     = case_id,
+                 col   = "Ate donated food",
+                 shape = "Ate donated food"),
+             size   = 2,
+             stroke = 2) +
+  #
+  scale_color_manual(name   = NULL,
+                     values = c("Attended Christmas party" = "black", 
+                                "Ate donated food" = "purple3"),
+                     guide  = guide_legend(reverse = TRUE)) +
+  #
+  scale_shape_manual(name   = NULL,
+                     values = c("Attended Christmas party" = 16, 
+                                "Ate donated food" = 16),
+                     guide  = guide_legend(reverse = TRUE)) +
+
+  #
+  scale_x_date(date_breaks = "3 day",
+               date_labels = "%d-%b") +
+  #
+  coord_cartesian(xlim = c(date_epicurve_start - 4, date_epicurve_end)) +
+  #
+  labs(title = NULL,
+       x     = NULL,
+       y     = NULL) +
+  #
+  theme_classic() +
+  #
+  theme(axis.text   = element_text(size = 9),
+        axis.text.x = element_text(angle = 90,
+                                   vjust = 0.5,
+                                   hjust = 1),
+        #
+        plot.margin = margin(0, 0, 0, 0),
+        #
+        legend.position = "bottom",
+        legend.location = "plot",
+        legend.box      = "horizontal",
+        legend.margin   = margin(),
+        legend.text     = element_text(size = 9),
+        #
+        plot.caption = element_text(hjust = 0))
+```
+
+# Demographics
+
+**Summary statistics for age, by association with Carrical House, `r datetime_update`**
+
+```{r, warning = FALSE}
+# 
+linelist_clean %>%
+  dplyr::group_by(link_to_carrical) %>% 
+  dplyr::summarise(n      = as.double(n()),
+                   min    = round(min(age, na.rm = TRUE), digits = 1),
+                   max    = round(max(age, na.rm = TRUE), digits = 1),
+                   mean   = round(mean(age, na.rm = TRUE), digits = 1),
+                   median = round(median(age, na.rm = TRUE), digits = 1)) %>%
+  #
+  dplyr::ungroup() %>% 
+  #
+  dplyr::mutate_if(is.numeric, list(~na_if(., Inf))) %>% 
+  dplyr::mutate_if(is.numeric, list(~na_if(., -Inf))) %>% 
+  dplyr::mutate_if(is.numeric, list(~na_if(., NaN))) %>% 
+  #
+  knitr::kable(table.attr = "style = \"color: black;\"",
+               align      = "lrrrrr",
+               col.names  = c(" ", "n", "Min", "Max", "Mean", "Median")) %>%
+  #
+  kableExtra::kable_styling(full_width = FALSE,
+                            html_font  = "Arial",
+                            font_size  = 14) %>%
+  #
+  kableExtra::column_spec(2:5,
+                          width = "1.0in") %>% 
+  #
+  kableExtra::row_spec(row       = 0,
+                       bold      = TRUE,
+                       extra_css = "border-top: 2px solid lightgray; border-bottom: 2px solid lightgray;") %>%
+  #
+  kableExtra::row_spec(row       = 4,
+                       extra_css = "border-bottom: 2px solid lightgray;") %>% 
+  #
+  kableExtra::add_header_above(c(" " = 2, "Age (years)" = 4))
+```
+
+**Age and sex distribution of cases, `r datetime_update`**
+
+```{r}
+# 
+linelist_clean %>%
+  apyramid::age_pyramid(age_group     = "age_group",
+                        stack_by      = "sex",
+                        show_midpoint = FALSE) +
+  #
+  labs(x = " ",
+       y = "Number of cases") +
+  #
+  theme_classic() +
+  #
+  theme(axis.title   = element_text(size = 9),
+        axis.title.x = element_text(margin = margin(10, 0, 0, 0)),
+        axis.text    = element_text(size = 8),
+        #
+        legend.position = "bottom",
+        legend.title    = element_blank())
+```
+
+# Symptoms
+
+**Number of cases reporting each symptom, `r datetime_update`**
+
+```{r, warning = FALSE}
+# 
+linelist_clean %>% 
+  dplyr::summarise(vomiting       = sum(stringr::str_detect(vomiting, "Yes"), na.rm = TRUE),
+                   diarrhoea      = sum(stringr::str_detect(diarrhoea, "Yes"), na.rm = TRUE),
+                   fever          = sum(stringr::str_detect(fever, "Yes"), na.rm = TRUE),
+                   nausea         = sum(stringr::str_detect(nausea, "Yes"), na.rm = TRUE),
+                   abdominal_pain = sum(stringr::str_detect(abdominal_pain, "Yes"), na.rm = TRUE),
+                   anorexia       = sum(stringr::str_detect(anorexia, "Yes"), na.rm = TRUE),
+                   headache       = sum(stringr::str_detect(headache, "Yes"), na.rm = TRUE),
+                   lethargy       = sum(stringr::str_detect(lethargy, "Yes"), na.rm = TRUE)) %>%
+  #
+  tidyr::pivot_longer(everything(),
+                      names_to = "symptom") %>% 
+  #
+  dplyr::rename(n = value) %>% 
+  #
+  dplyr::mutate(symptom = stringr::str_to_sentence(symptom),
+                symptom = stringr::str_replace(symptom, "_", " ")) %>%
+  #
+  dplyr::mutate(percent = round(n / (nrow(linelist_clean)) * 100, digits = 0)) %>% 
+  #
+  dplyr::arrange(desc(percent)) %>% 
+  #
+  knitr::kable(table.attr = "style = \"color: black;\"",
+               align      = "lrr",
+               col.names  = c("Symptom", "n", "%")) %>%
+  #
+  kableExtra::kable_styling(full_width = FALSE,
+                            html_font  = "Arial",
+                            font_size  = 14) %>%
+  #
+  kableExtra::column_spec(2:3,
+                          width = "1.0in") %>%
+  #
+  kableExtra::row_spec(row       = 0,
+                       bold      = TRUE,
+                       extra_css = "border-top: 2px solid lightgray; border-bottom: 2px solid lightgray;") %>%
+  #
+  kableExtra::row_spec(row       = 8,
+                       extra_css = "border-bottom: 2px solid lightgray;")
+```
+
+<br>
+
+<div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>
