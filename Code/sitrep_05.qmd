@@ -1,0 +1,798 @@
+---
+title-block: false
+
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-expand: true
+    toc-location: left
+    anchor-sections: false
+    embed-resources: true
+    css: styles.css
+    echo: false
+    warning: false
+    message: false
+    grid: 
+      body-width: 1250px
+---
+
+```{r}
+#
+if (!require("pacman")) install.packages("pacman")
+
+pacman::p_load(here,
+               tidyverse,
+               tidyr,
+               rmarkdown,
+               quarto,
+               bsicons,
+               rlang,
+               glue,
+               janitor,
+               readxl,
+               sf,
+               knitr,
+               kableExtra,
+               colorRamps,
+               extrafont,
+               ggnewscale,
+               plotly,
+               leaflet)
+```
+
+
+```{r}
+#
+options(knitr.kable.NA = '--')
+
+here::i_am("Code/sitrep_05.qmd")
+```
+
+
+```{r}
+# Date of report generation
+datetime_update <- paste0("data as of ", format(Sys.Date(), format = "%d/%m/%Y"))
+
+# Start date for outbreak
+date_outbreak_start <- lubridate::ymd("2025-12-19")
+
+# x-axis limits for epi curves
+date_epicurve_start <- lubridate::ymd(date_outbreak_start - days(3))
+date_epicurve_end   <- Sys.Date() + 1
+
+# NEPHU colours for charts
+nephu_blue   <- "#374091"
+nephu_green  <- "#5BC788"
+nephu_peach  <- "#FFA78C"
+nephu_yellow <- "#FFF694"
+```
+
+
+```{r}
+# Read in linelist
+linelist_raw <- readxl::read_xlsx(paste0(here::here(), "/Data/linelist_enteritidis.xlsx"),
+                                  guess_max = min(100000, Inf)) %>% 
+  #
+  janitor::clean_names()
+```
+
+
+```{r}
+# 
+linelist_clean <- linelist_raw %>%
+  dplyr::mutate(
+    symptom_onset_date = lubridate::ymd(symptom_onset_date),
+    symptom_end_date   = lubridate::ymd(symptom_end_date),
+    #
+    symptom_end_date = dplyr::case_when(
+      is.na(symptom_end_date) ~ lubridate::ymd(Sys.Date()),
+      TRUE ~ symptom_end_date),
+    #
+    consumed_food_18th = lubridate::ymd(consumed_food_18th),
+    consumed_food_19th = lubridate::ymd(consumed_food_19th),
+    #
+    age_group = factor(dplyr::case_when(
+      age < 10  ~ "0-9 years",
+      age < 20  ~ "10-19 years",
+      age < 30  ~ "20-29 years",
+      age < 40  ~ "30-39 years",
+      age < 50  ~ "40-49 years",
+      age < 60  ~ "50-59 years",
+      age < 70  ~ "60-69 years",
+      age < 80  ~ "70-79 years",
+      age < 90  ~ "80-89 years",
+      age >= 90 ~ "90+ years",
+      TRUE ~ "Not stated"),
+      levels = c("0-9 years",
+                 "10-19 years",
+                 "20-29 years",
+                 "30-39 years",
+                 "40-49 years",
+                 "50-59 years",
+                 "60-69 years",
+                 "70-79 years",
+                 "80-89 years",
+                 "90+ years",
+                 "Not stated")),
+    #
+    sex = factor(sex,
+                 levels = c("Male",
+                            "Female")),
+    #
+    link_to_carrical = factor(link_to_carrical,
+                              levels = c("Resident",
+                                         "Staff",
+                                         "Donated food",
+                                         "No link identified")),
+    #
+    hospitalised = factor(hospitalised,
+                          levels = c("Yes",
+                                     "No")),
+    #
+    deceased = factor(deceased,
+                      levels = c("Yes",
+                                 "No")))
+```
+
+
+```{r}
+#| out-width: "100%"
+knitr::include_graphics(here::here("Images", "nephu_logo.png"))
+```
+
+# Situation Report [#5]{style="color: red;"}
+
+## Outbreak {.unnumbered .unlisted}
+
+<div style="height: 0.5em;"></div>
+
+*Information contained in this Sit Rep is sensitive, confidential, and not intended for wider distribution or use beyond the PH-IMT.*
+
+<div style="height: 0.5em;"></div>
+
+::: {.incident-table}
+| Incident name             | *Salmonella* Enteritidis cgMLST 3303 cluster |
+|:--------------------------|:---------------------------------------------|
+| PHESS ID                  | 320266203890                                 |
+| Date/time Sit Rep updated | [03/02/2026]{style="color: red;"}            |
+| Sit Rep approved by (IC)  |                                              |
+| Sit Rep prepared by (IO)  | Alana Little                                 |
+
+: {tbl-colwidths="[35,65]"}
+:::
+
+<div style="height: 1em;"></div>
+
+::: {.callout-note title="Overall summary of incident" icon=false collapse=false}
+- Cluster of 6x *Salmonella* Enteritidis cgMLST 3303 cases.
+
+<div style="height: 0.1em;"></div>
+
+- 4x confirmed cases identified by DH on 12/01/2026.
+  - Whole genome sequencing confirmed all 4x isolates are closely related.
+  - This cgMLST has not previously been detected in Victoria.
+  - A fifth case associated with this cluster was identified on 21/01/2026.
+  - A sixth case likely associated with this cluster (culture positive for Salmonella spp. and epidemiologically linked to a confirmed case) was identified on 22/01/2026.
+
+<div style="height: 0.1em;"></div>
+
+- 2x confirmed cases reside in WPHU catchment (1x Keilor, 1x Williamstown).
+
+<div style="height: 0.1em;"></div>
+
+- The most common symptoms are diarrhoea (12/13 cases, 92%), fever (5/13, 38%), vomiting (3/13, 23%), and abdominal pain (3/13, 23%).
+  - Most cases are poor historians and unable to be contacted for interview, with information about symptoms, symptom onset, and symptom duration collected from proxies.
+  
+<div style="height: 0.1em;"></div>
+
+- Potential source is donated food served at Carrical House, Hawthorn on the evening of 19/12/2025.
+  - Donated food sourced from a Christmas party held at Form 700, Altona at lunchtime on 18/12/2025.
+  - 3 out of 5 confirmed cases and 7 out of 8 suspected cases consumed leftovers 
+    - 1x confirmed case works at Form 700, but states that they did not attend the party held at Form 700 on 18/12 or consume any leftovers from the party. Case also stated that they did not recall eating any shared food or leftovers at Form 700.
+    - 1x confirmed case has no known association with Carrical House or Form 700.
+    - 1x suspected case is an infant who resides with their parents in staff accommodation at Carrical House and does not consume solid foods. This case likely acquired their infection via secondary household transmission from their brother (Case 3) or father (Case 8).
+:::
+
+<div style="height: 0.125em;"></div>
+
+::: {.callout-tip title="Outbreak case definitions" icon=false collapse=false}
+**Confirmed case:** Individuals with a positive culture for *Salmonella* Enteritidis cgMLST 3303. 
+
+**Suspected case:** Individuals with a clinically compatible illness but no positive test results for *Salmonella* Enteritidis cgMLST 3303 who consumed food from the Form 700 Christmas party (including leftovers) or who have an epidemiological link to a confirmed case. 
+:::
+
+***
+
+## Epidemiological Investigations
+
+### Confirmed Case Details
+
+- **Case 1: 320256194605**
+  - 72-year-old male, Hawthorn
+  - Symptom onset: approx. 21/12/2025 (discharge summary)
+    - Symptoms: diarrhoea, poor oral intake
+  - Faecal culture: *Salmonella* Enteritidis cgMLST 3303
+  - Resident of Carrical House
+    - Bedroom on same floor as 320266199544, likely share communal bathroom, kitchen, and dining facilities
+  - Attended common dinner at Carrical House on 19/12/2025
+  - Unable to obtain information directly from case (cognitive impairment, confusion)
+  - Admitted to St Vincents Hospital 22/12/2025, discharged 09/01/2026
+
+<div style="height: 0.1em;"></div>
+
+- **Case 2: 320266199544**
+  - 64-year-old male, Hawthorn
+  - Symptom onset: approx. 27/12/2025 (discharge summary)
+    - Symptoms: diarrhoea, abdominal pain, vertigo
+    - Symptom onset may have been a few days earlier but unclear due to chronic health issues (IBS)
+  - Faecal culture: *Salmonella* Enteritidis cgMLST 3303
+  - Resident of Carrical House
+    - Bedroom on same floor as 320256194605, likely share communal bathroom, kitchen, and dining facilities
+  - Attended common dinner at Carrical House on 19/12/2025
+  - Unable to obtain information directly from case (acute brain injury, schizoaffective disorder)
+  - Admitted to St Vincents Hospital 29/12/2025, discharged 05/01/2026
+
+<div style="height: 0.1em;"></div>
+
+- **Case 3: 320256193343**
+  - 12-year-old male, Hawthorn
+  - Symptom onset: 20/12/2025
+    - Symptoms: diarrhoea, nausea, vomiting, abdominal pain, fever, headache, lethargy
+  - Faecal culture: *Salmonella* Enteritidis cgMLST 3303
+  - Lives with his father (Case 8) part-time in private staff accommodation at Carrical House
+  - Attended common dinner at Carrical House on 19/12/2025
+    - Helped to serve food and ate dinner
+  - Interview conducted with case’s parent, unable to provide exact details of foods consumed
+  - Admitted to Austin Hospital 22/12/2025, discharged 24/12/2025
+
+<div style="height: 0.1em;"></div>
+
+- **Case 4: 320256196806**
+  - 34-year-old male, Keilor
+  - Symptom onset: 22/12/2025
+    - Symptoms: diarrhoea, abdominal pain
+  - Case has a history of bowel issues, noted exacerbation on 22/12
+  - Faecal culture: *Salmonella* Enteritidis cgMLST 3303
+  - Works as a carpenter
+    - Work site is in Melbourne CBD
+    - No contact with sewerage
+  - Attended a family Christmas gathering, did not attend any work gatherings
+  - No overseas travel in the past year and no contact with recent overseas travellers 
+
+<div style="height: 0.1em;"></div>
+
+- **Case 5: 320266201579**
+  - 29-year-old male, Williamstown
+  - Symptom onset: 22/12/2025
+    - Symptoms: diarrhoea, fever, headache, lethargy
+  - Faecal culture: *Salmonella* Enteritidis cgMLST 3303
+  - Works as an engineer at Form 700
+    - Based at Altona office, also visited work site in Point Cook in week prior to symptom onset
+    - Has not attended any work sites in Hawthorn/Kew
+  - Did not attend Form 700 Christmas party on 18/12/2025 or consume leftovers from the party
+    - Attended a Form 700 Christmas party early in December, exact date unknown
+  - Did not recalling eating any shared food or leftovers at Form 700 during period of interest
+  - Usually does own meal prep for work
+  - Does not regularly eat chicken or eggs
+  - No recent overseas travel or contact with recently returned travellers
+
+### Suspected Case Details
+
+- **Case 6: 320266209818**
+  - 5-month-old female, Hawthorn
+  - Symptom onset: 18/01/2026
+    - Symptoms: diarrhoea, fever
+  - Faecal culture: *Salmonella spp.* at primary lab 22/01/2026, further identification pending at MDU
+  - Case interview completed 23/01/2026
+  - Sibling of Case 3 and child of Case 8
+    - Lives full-time with parents in private staff accommodation at Carrical House
+    - No physical contact with residents or surfaces at Carrical House
+    - Has lots of contact with Case 3 (playing, handling baby)
+    - Breast milk only, no formula or solid foods
+    - Twin brother and mother remain well
+    - Likely secondary household transmission from brother (Case 3) or father (Case 8)
+
+<div style="height: 0.1em;"></div>
+
+- **Case 7: 320266206183**
+  - 41-year-old male, Bundoora
+  - Symptom onset: 21/12/2025
+    - Symptoms: diarrhoea, fever
+  - Faecal culture: declined to provide faecal sample
+  - Case’s father works at Carrical House (Maintenance Manager)
+  - Attended work Christmas party on 18/12/2025
+    - Consumed leftovers at home on 19/12/2025
+  - Donated leftovers to Carrical House on 19/12/2025
+    - Dropped off food in the kitchen, did not stay for meal
+    - Did not use toilets
+  - Also went out for dinner at a pub in Williamstown on 18/12/2025 and believes that this is the source of his illness rather than the Christmas party leftovers
+
+<div style="height: 0.1em;"></div>
+
+- **Case 8: No PHESS ID**
+  - Carrical House Housing Manager
+  - Symptom onset: 20/12/2025
+    - Fever for approx. one hour, no other symptoms
+  - Did not seek medical attention and no faecal sample collected
+
+<div style="height: 0.1em;"></div>
+
+- **Case 9: No PHESS ID**
+  - Carrical House resident
+  - Symptom onset: 20/12/2025
+    - Symptoms: diarrhoea, vomiting
+  - Did not seek medical attention and no faecal sample collected
+  - Faecal sample requested 16/01/2026
+
+<div style="height: 0.1em;"></div>
+
+- **Case 10: No PHESS ID**
+  - Carrical House resident
+  - Symptom onset: approx. 26/12/2025
+    - Symptoms: diarrhoea, flu
+  - Did not seek medical attention and no faecal sample collected
+  - Faecal sample requested 16/01/2026
+
+<div style="height: 0.1em;"></div>
+
+- **Case 11: No PHESS ID**
+  - Carrical House resident
+  - Symptom onset: 21/12/2025
+    - Symptoms: diarrhoea
+  - Did not seek medical attention and no faecal sample collected
+  - Faecal sample requested 16/01/2026
+
+<div style="height: 0.1em;"></div>
+
+- **Case 12: No PHESS ID**
+  - Carrical House resident
+  - Symptom onset: 21/12/2025
+    - Symptoms: diarrhoea, vomiting
+  - Did not seek medical attention and no faecal sample collected
+  - Faecal sample requested 16/01/2026
+
+<div style="height: 0.1em;"></div>
+
+- **Case 13: No PHESS ID**
+  - Carrical House resident
+  - Symptom onset: approx. 19/12/2025
+    - Symptoms: diarrhoea
+  - Did not seek medical attention and no faecal sample collected
+  - Faecal sample requested 16/01/2026
+
+### Epicurves
+
+**Figure 1** shows an epicurve by symptom onset date and case classification (confirmed or suspected).
+
+**Figure 2** shows an epicurve by symptom onset date and the case's association with Carrical House (resident, staff, donated food, or no known association).
+
+::: {.panel-tabset}
+
+#### Figure 1
+
+**Number of people reporting symptoms, by symptom onset date and case classification, [`r datetime_update`]{style="color: red;"}**
+
+```{r}
+#| fig-align: center
+#| out-width: "100%"
+#
+linelist_clean %>%
+  dplyr::filter(!is.na(symptom_onset_date)) %>%
+  #
+  ggplot() +
+  #
+  geom_histogram(aes(x = symptom_onset_date, fill = classification),
+                 color    = "black",
+                 alpha    = 1,
+                 binwidth = 1) +
+  #
+  scale_x_date(date_breaks = "2 day",
+               date_labels = "%d-%b") +
+  #
+  coord_cartesian(xlim = c(date_epicurve_start, date_epicurve_end)) +
+  #
+  scale_y_continuous(limits = c(0, NA),
+                     breaks = scales::breaks_width(1),
+                     expand = expansion(add = c(0, 1.1))) +
+  #
+  scale_fill_manual(values = c("#9DBB61", "#4BACC6")) +
+  #
+  labs(title = " ",
+       x     = "Symptom onset date",
+       y     = "Number of cases") +
+  #
+  theme_classic() +
+  #
+  theme(axis.title  = element_text(size = 9),
+        axis.text   = element_text(size = 8),
+        axis.text.x = element_text(angle = 90,
+                                   vjust = 0.5,
+                                   hjust = 1),
+        #
+        axis.title.x = element_text(margin = margin(10, 0, 0, 0)),
+        axis.title.y = element_text(margin = margin(0, 10, 0, 0)),
+        #
+        legend.position = "bottom",
+        legend.title    = element_blank())
+```
+
+*Note:*<br>
+- *Case 2 and Case 10 have unclear dates of symptom onset and may have had symptoms earlier than stated.*
+
+#### Figure 2
+
+**Number of people reporting symptoms, by symptom onset date and association with Carrical House, [`r datetime_update`]{style="color: red;"}**
+
+```{r}
+#| fig-align: center
+#| out-width: "100%"
+#
+linelist_clean %>%
+  dplyr::filter(!is.na(symptom_onset_date)) %>%
+  #
+  ggplot() +
+  #
+  geom_histogram(aes(x = symptom_onset_date, fill = link_to_carrical),
+                 color    = "black",
+                 alpha    = 1,
+                 binwidth = 1) +
+  #
+  scale_x_date(date_breaks = "2 day",
+               date_labels = "%d-%b") +
+  #
+  coord_cartesian(xlim = c(date_epicurve_start, date_epicurve_end)) +
+  #
+  scale_y_continuous(limits = c(0, NA),
+                     breaks = scales::breaks_width(1),
+                     expand = expansion(add = c(0, 1.1))) +
+  #
+  scale_fill_manual(values = c(nephu_blue, nephu_green, nephu_peach, nephu_yellow)) +
+  #
+  labs(title = " ",
+       x     = "Symptom onset date",
+       y     = "Number of cases",
+       fill  = "Carrical House: ") +
+  #
+  theme_classic() +
+  #
+  theme(axis.title  = element_text(size = 9),
+        axis.text   = element_text(size = 8),
+        axis.text.x = element_text(angle = 90,
+                                   vjust = 0.5,
+                                   hjust = 1),
+        #
+        axis.title.x = element_text(margin = margin(10, 0, 0, 0)),
+        axis.title.y = element_text(margin = margin(0, 10, 0, 0)),
+        #
+        plot.margin = margin(5, 5, 0, 5),
+        #
+        legend.position = "bottom",
+        legend.title    = element_text(size = 9))
+```
+
+*Note:*<br>
+- *Case 2 and Case 10 have unclear dates of symptom onset and may have had symptoms earlier than stated.*
+:::
+
+### Swimlane Plot
+
+**Figure 3. Swimlane plot of confirmed and suspected *Salmonella* Enteritidis cases, [`r datetime_update`]{style="color: red;"}**
+
+```{r}
+#| fig-align: center
+#| out-width: "100%"
+#
+linelist_clean %>% 
+  ggplot() +
+  #
+  geom_segment(aes(x    = symptom_onset_date - 6, 
+                   xend = symptom_onset_date, 
+                   y    = forcats::fct_reorder(case_id, symptom_onset_date), 
+                   yend = forcats::fct_reorder(case_id, symptom_onset_date),
+                   col  = "Acquisition period"),
+               linewidth = 5) +
+  #
+  geom_segment(aes(x    = symptom_onset_date, 
+                   xend = symptom_end_date + 0.25, 
+                   y    = forcats::fct_reorder(case_id, symptom_onset_date), 
+                   yend = forcats::fct_reorder(case_id, symptom_onset_date),
+                   col  = "Symptom duration (approx.)"),
+               linewidth = 5) +
+  #
+  scale_color_manual(name   = NULL,
+                     labels = c("Acquisition period", "Symptom duration (approx.)"),
+                     values = c("lightblue", "#FFA78C")) +
+  #
+  ggnewscale::new_scale_color() +
+  #
+  geom_point(aes(x     = consumed_food_18th,
+                 y     = case_id,
+                 col   = "Attended Christmas party",
+                 shape = "Attended Christmas party"),
+             size   = 2,
+             stroke = 2) +
+  #
+  geom_point(aes(x     = consumed_food_19th,
+                 y     = case_id,
+                 col   = "Ate donated food",
+                 shape = "Ate donated food"),
+             size   = 2,
+             stroke = 2) +
+  #
+  scale_color_manual(name   = NULL,
+                     values = c("Attended Christmas party" = "black", 
+                                "Ate donated food"         = "purple3"),
+                     guide  = guide_legend(reverse = TRUE)) +
+  #
+  scale_shape_manual(name   = NULL,
+                     values = c("Attended Christmas party" = 16, 
+                                "Ate donated food"         = 16),
+                     guide  = guide_legend(reverse = TRUE)) +
+
+  #
+  scale_x_date(date_breaks = "3 day",
+               date_labels = "%d-%b") +
+  #
+  coord_cartesian(xlim = c(date_epicurve_start - 4, date_epicurve_end)) +
+  #
+  labs(title = NULL,
+       x     = NULL,
+       y     = NULL) +
+  #
+  theme_classic() +
+  #
+  theme(axis.text   = element_text(size = 9),
+        axis.text.x = element_text(angle = 90,
+                                   vjust = 0.5,
+                                   hjust = 1),
+        #
+        plot.margin = margin(0, 0, 0, 0),
+        #
+        legend.position = "bottom",
+        legend.location = "plot",
+        legend.box      = "horizontal",
+        legend.margin   = margin(),
+        legend.text     = element_text(size = 9),
+        #
+        plot.caption = element_text(hjust = 0))
+```
+
+*Note:*<br>
+- *Case 2 and Case 10 have unclear dates of symptom onset and may have had symptoms earlier than stated.*<br>
+- *Symptom end dates and durations are approximate for Cases 9 to 13.*
+
+### Cluster Diagram
+
+**Figure 4. *Salmonella* Enteritidis cluster diagram, [`r datetime_update`]{style="color: red;"}**
+
+```{r}
+#| column: screen-inset-right
+#| out-width: "100%"
+knitr::include_graphics(here::here("Images", "cluster_diagram.png"))
+```
+
+### Hypotheses on Source or Transmission
+
+- Three out of five confirmed cases linked to Carrical House
+  - 2x resident cases (Case 1 and Case 2), 1x child (Case 3) who lives on-site part-time
+
+<div style="height: 0.1em;"></div>
+
+- These three cases all consumed food at a common dinner on 19/12/2025
+  - Leftover food donated by a Carrical House staff member’s son’s (Case 7) work Christmas party at Form 700 on 18/12/2025 was served at Carrical House on 19/12/2025
+  - This was the only common meal shared by all three Carrical House associated confirmed cases
+  - Likely temperature abuse of leftovers/donated food
+
+<div style="height: 0.1em;"></div>
+
+- Two confirmed cases (Case 4 and Case 5) do not have a known link to Carrical House
+  - Case 5 works for Form 700 but did not attend the Christmas party on 18/12/2025 or consume leftovers from the party
+  - Case 4 works in the construction industry (carpenter) but has no known link to Form 700
+
+<div style="height: 0.1em;"></div>
+
+- The donated food was a last-minute addition to the menu at Carrical House on 19/12/2025. The originally planned meal for that evening (frozen spaghetti bolognese) was also served
+  - There have been no reports of illness from residents who only ate the spaghetti bolognese
+  - Case 3 and Case 8 did not consume spaghetti bolognese or any other meals served at Carrical House
+
+<div style="height: 0.1em;"></div>
+
+- Donated food and spaghetti bolognese were served by Case 3, Case 8, and another staff member who has remained well
+  - All food was served by staff members, no self-service of food
+  - There were no reports of illness among staff at the time of serving food
+
+<div style="height: 0.1em;"></div>
+
+- Seven out of eight suspected cases consumed food sourced from the Form 700 Christmas party
+  - Case 7 attended the Christmas party on 18/12/2025 and ate leftovers at home on 19/12/2025. He dropped food off to Carrical House but did not attend the common dinner at Carrical House on 19/12/2025
+  - Cases 8, 9, and 10 attended the common dinner at Carrical House on 19/12/2025
+  - Case 6 is an infant who does not consume solid foods. This case likely acquired their illness via secondary household transmission from their brother (Case 3) or father (Case 8)
+
+***
+
+## Environmental Investigations
+
+### Carrical House, Hawthorn
+
+- 36 people live on-site
+  - Mixture of residents who have complex health or mental health issues, going through hard times, and/or current/previous substance use issues
+
+<div style="height: 0.1em;"></div>
+
+- Residents in rooming house have single bedrooms, shared bathrooms, and access to 2x common kitchens
+  - Additional commercial kitchen only accessible by staff
+  - Very rare for residents to share food in common kitchens
+
+<div style="height: 0.1em;"></div>
+
+- Residents in self-contained apartments have individual bedrooms, bathrooms, and kitchens
+  - No residents from self-contained apartments have been unwell
+
+<div style="height: 0.1em;"></div>
+
+- Carrical House residents have breakfasts and dinners provided by facility but are responsible for their own lunches and for dinner on Saturdays
+  - Breakfasts provided by on-site commercial kitchen
+  - Confirmation received from Carrical House that all food is prepared on-site, with food sent from Romana House only on public holidays (rarely) or when there are staff shortages at Carrical House
+  - All eggs served at Carrical House are sourced from Woolworths (online ordering)
+  - Eggs on toast is provided for breakfast once per week (Thursdays)
+  - All chicken served at Carrical House sourced from Joe’s Quality Corner at Preston Market (Stall 197). There was one order from the period of interest (28x chicken schnitzels ordered on 18/12/2025)
+
+<div style="height: 0.1em;"></div>
+
+- Large garden and smaller vegetable/herb patches (e.g. potted tomatoes) on-site
+  - Yates Dynamic Lifter (containing composted chicken manure, fish meal, blood and bone, and seaweed) used in garden, purchased from Bunnings
+  - Carrical House staff unsure whether residents could have handled Dynamic Lifter/soil from gardens
+
+<div style="height: 0.1em;"></div>
+
+- No animals (including chickens) on-site
+
+<div style="height: 0.1em;"></div>
+
+- In the week prior to 20/12/2025 there have been visits from maintenance workers, tenancy workers, and cooks
+
+<div style="height: 0.1em;"></div>
+
+- Case 7 noted that his father (staff member at Carrical House) mentioned that a bag containing catheter bottles was dropped on the floor of the dining room on 19/12/2025 and bottles inside the bag were broken
+
+<div style="height: 0.1em;"></div>
+
+- Staff member noted that they had started hearing about unwell residents around 22/12/2025
+  - Residents have complex health issues and are often unwell/requiring hospital visits
+  - Realised that there might be a common issue after Case 3 was diagnosed on 23/12/2025
+
+<div style="height: 0.1em;"></div>
+
+- Boroondara Council notified 15/01/2026 and gastro follow-up requested
+
+<div style="height: 0.1em;"></div>
+
+- Boroondara Council visited Carrical House on 16/01/2026
+  - 7-day menu and information about shared meals in the week prior to first symptom onset provided to Council
+  - Council requested that facility collect faecal samples if possible and provided faecal pots
+  - Supervised clean conducted 16/01/2026
+
+<div style="height: 0.1em;"></div>
+
+- Facility did not have a register of donated foods at time of Council visit
+  - Donations protocol updated to only accept low-risk pre-packaged foods
+  - Council encouraged facility to develop and maintain a register of donated foods
+
+<div style="height: 0.1em;"></div>
+
+- Food safety compliance check completed 16/01/2026
+  - Inspection failed – failure to provide working digital food-grade probe thermometer
+  - Additional minor issues identified
+
+<div style="height: 0.1em;"></div>
+
+- As of 23/01/2026 no other residents have reported being unwell
+  - NEPHU reiterated importance of hand hygiene, particularly when Housing Manager is changing twins’ nappies and serving food to residents
+  - Precautionary clean of resident shared facilities (e.g. bathrooms, kitchens) suggested to prevent reinfection
+
+### Romana House, Kew
+
+- Small vegetable patch on-site
+  - Unknown whether chicken manure is used
+  - Accessible by residents, not maintained by staff external to the facility
+
+<div style="height: 0.1em;"></div>
+
+- No chickens or animals on-site
+
+<div style="height: 0.1em;"></div>
+
+- In the week prior to 20/12/2025 there have been visits from maintenance workers, tenancy workers, and cooks
+
+### Form 700, Altona
+
+- Christmas party held in workplace warehouse on 18/12/2025
+  - Note that there are discrepancies between the date for the party provided by Case 7 and the Form 700 owner (18/12/2025) and the caterer (19/12/2025)
+
+<div style="height: 0.1em;"></div>
+
+- Catered by Zdrava Hrana Catering
+  - Registered with Darebin Council
+  - Regular food suppliers include:
+    - Seafood and pork – Richmond-based wholesaler (name not disclosed)
+    - Chicken – La Ionica, Thomastown
+    - Coles and Woolworths (specific locations not disclosed)
+  - No recent overseas travel by caterer, his wife, or his son-in-law
+  - Most recent travel was to Macedonia two years ago
+  - No recent gastroenteritis among caterer or his family
+
+<div style="height: 0.1em;"></div>
+
+- Food prepared off-site at caterer’s business location and delivered to Form 700 on morning of 18/12/2025
+  - All food preparation and handling by caterer, his wife, and his son-in-law
+  - Caterer provided instructions to Form 700 staff about refrigeration of leftovers
+  - No food preparation or cooking on-site at Form 700
+  - Food served downstairs in covered indoor warehouse
+  - Caterer did not stay for the party after delivering food
+  - Self-serve buffet
+  - Moved upstairs to an office after the party and left out (not refrigerated) for 4-5 hours, staff members picking at food throughout afternoon
+  - Leftovers were taken home by some staff members, including Case 7, at the end of the day
+
+<div style="height: 0.1em;"></div>
+
+- Approximately 60-100 attendees from multiple job sites
+  - No other known reports of illness among attendees at the party apart from Case 7
+  - Form 700 owner mentioned that two people who picked at food throughout the afternoon had been unwell, unknown whether Case 5 is one of these people
+  - Form 700 HR is unaware of any recent overseas travel among staff members
+
+<div style="height: 0.1em;"></div>
+
+- Donated leftovers: chicken thigh fillets (no bones), roast leg of lamb, roast pork (chunky style), roasted potatoes, minced meat (Balkan style) sausages, green salads
+  - No eggs or egg-containing dishes were served
+  - Caterer does not typically prepare egg-based dishes
+
+***
+
+## Risk Assessment
+
+- Likely point source outbreak from an item served at the Christmas party on 18/12/2025 and as leftovers on 19/12/2025
+  - Likely initial contamination by an unwell or asymptomatic food handler or party attendee at the Christmas party
+
+<div style="height: 0.1em;"></div>
+
+- Likely temperature abuse of leftovers
+  - Left out (not refrigerated) for 4-5 hours after the Christmas party
+  - Donated food transported via car from Altona to Hawthorn (approx. 30-60 drive depending on traffic conditions)
+  - Served at Carrical House either on the evening of or the evening following the Form 700 Christmas party
+  - 18/12/2025 and 19/12/2025 were both very hot days, with Melbourne maximum temperature of 38°C on 18/12/2025 and a maximum temperature of 33°C on 19/12/2025
+
+<div style="height: 0.1em;"></div>
+
+- Case 5 may have been infected via environmental contamination of Form 700 kitchen/dining areas
+
+***
+
+## Control Measures
+
+- Refer to Environmental Investigations and Risk Assessment sections.
+
+***
+
+## Communications
+
+- Discussion meetings with DH on 12/01/2026 and 15/01/2026.
+
+- PAG held with NEPHU and WPHU on 19/01/2026.
+
+- IMTs held with NEPHU, WPHU, and DH on 21/01/2026, 23/01/2026, and 30/01/2026.
+
+- Council and DH to be informed via usual processes.
+
+- No other broad communications planned at this stage.
+
+***
+
+## Further Actions Planned
+
+- Await speciation and cgMLST for Case 6.
+
+- NEPHU to contact Darebin Council and request site visit to caterer. 
+
+- Outbreak eligible for closure 01/02/2026 if no further cases.
+
