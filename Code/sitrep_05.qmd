@@ -377,15 +377,20 @@ knitr::include_graphics(here::here("Images", "nephu_logo.png"))
 #| fig-align: center
 #| out-width: "100%"
 #
-linelist_clean %>%
+data_histogram <- linelist_clean %>% 
   dplyr::filter(!is.na(symptom_onset_date)) %>%
   #
-  ggplot() +
+  count(symptom_onset_date, classification) %>% 
   #
-  geom_histogram(aes(x = symptom_onset_date, fill = classification),
-                 color    = "black",
-                 alpha    = 1,
-                 binwidth = 1) +
+  dplyr::mutate(hover_text = paste0("Symptom onset: ", format(symptom_onset_date, "%d/%m/%Y"), "<br>",
+                                    "Classification: ", classification, "<br>",
+                                    "Cases: ", n))
+ 
+figure <- data_histogram %>%
+  ggplot(aes(x = symptom_onset_date, y = n, fill = classification, text = hover_text)) +
+  #
+  geom_col(color = "black",
+           alpha = 1) +
   #
   scale_x_date(date_breaks = "2 day",
                date_labels = "%d-%b") +
@@ -396,25 +401,38 @@ linelist_clean %>%
                      breaks = scales::breaks_width(1),
                      expand = expansion(add = c(0, 1.1))) +
   #
-  scale_fill_manual(values = c("#9DBB61", "#4BACC6")) +
+  scale_fill_manual(values = c("#9DBB61", "#4BACC6"),
+                    guide  = "none") +
   #
-  labs(title = " ",
-       x     = "Symptom onset date",
-       y     = "Number of cases") +
+  labs(x = NULL,
+       y = NULL) +
   #
   theme_classic() +
   #
-  theme(axis.title  = element_text(size = 9),
-        axis.text   = element_text(size = 8),
-        axis.text.x = element_text(angle = 90,
+  theme(axis.text.x = element_text(angle = 90,
                                    vjust = 0.5,
-                                   hjust = 1),
-        #
-        axis.title.x = element_text(margin = margin(10, 0, 0, 0)),
-        axis.title.y = element_text(margin = margin(0, 10, 0, 0)),
-        #
-        legend.position = "bottom",
-        legend.title    = element_blank())
+                                   hjust = 1))
+
+figure %>% 
+  plotly::ggplotly(tooltip = "text") %>%
+  #
+  plotly::layout(hovermode = "x",
+                 #
+                 modebar = list(orientation = 'v'),
+                 #
+                 xaxis = list(title = list(text     = "Symptom onset date",
+                                           font     = list(size = 13, family = "Arial"),
+                                           standoff = 15)),
+                 #
+                 yaxis = list(title = list(text     = "Number of cases",
+                                           font     = list(size = 13, family = "Arial"),
+                                           standoff = 10)),
+                 #
+                 legend = list(x = 0.5,
+                               y = -0.25,
+                               #
+                               orientation = "h",
+                               xanchor     = "center"))
 ```
 
 *Note:*<br>
@@ -428,15 +446,20 @@ linelist_clean %>%
 #| fig-align: center
 #| out-width: "100%"
 #
-linelist_clean %>%
+data_histogram <- linelist_clean %>% 
   dplyr::filter(!is.na(symptom_onset_date)) %>%
   #
-  ggplot() +
+  dplyr::count(symptom_onset_date, link_to_carrical) %>% 
   #
-  geom_histogram(aes(x = symptom_onset_date, fill = link_to_carrical),
-                 color    = "black",
-                 alpha    = 1,
-                 binwidth = 1) +
+  dplyr::mutate(hover_text = paste0("Symptom onset: ", format(symptom_onset_date, "%d/%m/%Y"), "<br>",
+                                    "Link to Carrical House: ", link_to_carrical, "<br>",
+                                    "Cases: ", n))
+ 
+figure <- data_histogram %>%
+  ggplot(aes(x = symptom_onset_date, y = n, fill = link_to_carrical, text = hover_text)) +
+  #
+  geom_col(color = "black",
+           alpha = 1) +
   #
   scale_x_date(date_breaks = "2 day",
                date_labels = "%d-%b") +
@@ -447,28 +470,38 @@ linelist_clean %>%
                      breaks = scales::breaks_width(1),
                      expand = expansion(add = c(0, 1.1))) +
   #
-  scale_fill_manual(values = c(nephu_blue, nephu_green, nephu_peach, nephu_yellow)) +
+  scale_fill_manual(values = c(nephu_blue, nephu_green, nephu_peach, nephu_yellow),
+                    guide  = "none") +
   #
-  labs(title = " ",
-       x     = "Symptom onset date",
-       y     = "Number of cases",
-       fill  = "Carrical House: ") +
+  labs(x = NULL,
+       y = NULL) +
   #
   theme_classic() +
   #
-  theme(axis.title  = element_text(size = 9),
-        axis.text   = element_text(size = 8),
-        axis.text.x = element_text(angle = 90,
+  theme(axis.text.x = element_text(angle = 90,
                                    vjust = 0.5,
-                                   hjust = 1),
-        #
-        axis.title.x = element_text(margin = margin(10, 0, 0, 0)),
-        axis.title.y = element_text(margin = margin(0, 10, 0, 0)),
-        #
-        plot.margin = margin(5, 5, 0, 5),
-        #
-        legend.position = "bottom",
-        legend.title    = element_text(size = 9))
+                                   hjust = 1))
+
+figure %>% 
+  plotly::ggplotly(tooltip = "text") %>%
+  #
+  plotly::layout(hovermode = "x",
+                 #
+                 modebar = list(orientation = 'v'),
+                 #
+                 xaxis = list(title = list(text     = "Symptom onset date",
+                                           font     = list(size = 13, family = "Arial"),
+                                           standoff = 15)),
+                 #
+                 yaxis = list(title = list(text     = "Number of cases",
+                                           font     = list(size = 13, family = "Arial"),
+                                           standoff = 10)),
+                 #
+                 legend = list(x = 0.5,
+                               y = -0.25,
+                               #
+                               orientation = "h",
+                               xanchor     = "center"))
 ```
 
 *Note:*<br>
@@ -480,82 +513,170 @@ linelist_clean %>%
 **Figure 3. Swimlane plot of confirmed and suspected *Salmonella* Enteritidis cases, [`r datetime_update`]{style="color: red;"}**
 
 ```{r}
+#
+data_swimlane <- linelist_clean %>% 
+  dplyr::mutate(case_id = forcats::fct_reorder(case_id, symptom_onset_date),
+                #
+                hover_text = paste0("<b>Case ", stringr::str_sub(case_id, 6, 7), "</b><br>",
+                                    #
+                                    "Classification: ", classification, "<br>",
+                                    #
+                                    "Symptom onset: ", format(symptom_onset_date, "%d/%m/%Y"), "<br>",
+                                    #
+                                    "Symptom end date: ", dplyr::case_when(symptom_end_date == Sys.Date() ~ "Ongoing",
+                                                                           TRUE ~ format(symptom_end_date, "%d/%m/%Y")), "<br>",
+                                    #
+                                    "Attended Christmas party: ", dplyr::case_when(!is.na(consumed_food_18th) ~ "Yes",
+                                                                                   TRUE ~ "No"), "<br>",
+                                    #
+                                    "Ate donated food: ", dplyr::case_when(!is.na(consumed_food_19th) ~ "Yes",
+                                                                           TRUE ~ "No")))
+
+data_acq <- data_swimlane %>%
+  select(case_id, hover_text, symptom_onset_date) %>%
+  #
+  mutate(start = symptom_onset_date - 6,
+         end   = symptom_onset_date) %>%
+  #
+  rowwise() %>%
+  mutate(x = list(seq(start, end, by = "1 day"))) %>%
+  unnest(cols = c(x)) %>%
+  ungroup()
+
+data_sym <- data_swimlane %>%
+  select(case_id, hover_text, symptom_onset_date, symptom_end_date) %>%
+  #
+  mutate(start = symptom_onset_date,
+         end   = symptom_end_date + 0.25) %>%
+  #
+  rowwise() %>%
+  mutate(x = list(seq(start, end, by = "1 day"))) %>%
+  unnest(cols = c(x)) %>%
+  ungroup()
+```
+
+
+```{r}
 #| fig-align: center
 #| out-width: "100%"
 #
-linelist_clean %>% 
-  ggplot() +
+plotly::plot_ly(height = (80 + dplyr::n_distinct(data_swimlane$case_id) * 50)) %>% 
   #
-  geom_segment(aes(x    = symptom_onset_date - 6, 
-                   xend = symptom_onset_date, 
-                   y    = forcats::fct_reorder(case_id, symptom_onset_date), 
-                   yend = forcats::fct_reorder(case_id, symptom_onset_date),
-                   col  = "Acquisition period"),
-               linewidth = 5) +
+  plotly::add_lines(data  = data_acq,
+                    x     = ~x,
+                    y     = ~case_id,
+                    split = ~case_id,
+                    #
+                    line = list(width = 15, color = "lightblue"),
+                    #
+                    hoverinfo  = "none",
+                    showlegend = FALSE) %>% 
   #
-  geom_segment(aes(x    = symptom_onset_date, 
-                   xend = symptom_end_date + 0.25, 
-                   y    = forcats::fct_reorder(case_id, symptom_onset_date), 
-                   yend = forcats::fct_reorder(case_id, symptom_onset_date),
-                   col  = "Symptom duration (approx.)"),
-               linewidth = 5) +
+  plotly::add_markers(data  = data_acq,
+                      x     = ~x,
+                      y     = ~case_id,
+                      split = ~case_id,
+                      #
+                      marker = list(opacity = 0, size = 10),
+                      #
+                      hoverinfo  = "text",
+                      text       = ~hover_text,
+                      showlegend = FALSE) %>%
   #
-  scale_color_manual(name   = NULL,
-                     labels = c("Acquisition period", "Symptom duration (approx.)"),
-                     values = c("lightblue", "#FFA78C")) +
+  plotly::add_lines(data  = data_sym,
+                    x     = ~x,
+                    y     = ~case_id,
+                    split = ~case_id,
+                    #
+                    line = list(width = 15, color = "#FFA78C"),
+                    #
+                    hoverinfo  = "none",
+                    showlegend = FALSE) %>% 
   #
-  ggnewscale::new_scale_color() +
+  plotly::add_markers(data  = data_sym,
+                      x     = ~x,
+                      y     = ~case_id,
+                      split = ~case_id,
+                      #
+                      marker = list(opacity = 0, size = 10),
+                      #
+                      hoverinfo  = "text",
+                      text       = ~hover_text,
+                      showlegend = FALSE) %>% 
   #
-  geom_point(aes(x     = consumed_food_18th,
-                 y     = case_id,
-                 col   = "Attended Christmas party",
-                 shape = "Attended Christmas party"),
-             size   = 2,
-             stroke = 2) +
+  plotly::add_segments(data = data_swimlane %>% filter(case_id == levels(data_swimlane$case_id)[1]),
+                       x    = ~symptom_onset_date - 6,
+                       xend = ~symptom_onset_date,
+                       y    = ~case_id,
+                       yend = ~case_id,
+                       #
+                       line = list(width = 15, color = "lightblue"),
+                       #
+                       name       = "Acquisition period",
+                       showlegend = TRUE) %>%
   #
-  geom_point(aes(x     = consumed_food_19th,
-                 y     = case_id,
-                 col   = "Ate donated food",
-                 shape = "Ate donated food"),
-             size   = 2,
-             stroke = 2) +
+  plotly::add_segments(data = data_swimlane %>% filter(case_id == levels(data_swimlane$case_id)[1]),
+                       x    = ~symptom_onset_date,
+                       xend = ~symptom_end_date + 0.25,
+                       y    = ~case_id,
+                       yend = ~case_id,
+                       #
+                       line = list(width = 15, color = "#FFA78C"),
+                       #
+                       name       = "Symptom duration (approx.)",
+                       showlegend = TRUE) %>%
   #
-  scale_color_manual(name   = NULL,
-                     values = c("Attended Christmas party" = "black", 
-                                "Ate donated food"         = "purple3"),
-                     guide  = guide_legend(reverse = TRUE)) +
+  plotly::add_markers(data = data_swimlane %>% filter(!is.na(consumed_food_18th)),
+                      x    = ~consumed_food_18th,
+                      y    = ~case_id,
+                      #
+                      marker = list(size = 10, color = "black"),
+                      #
+                      name      = "Attended Christmas party",
+                      hoverinfo = "none") %>% 
   #
-  scale_shape_manual(name   = NULL,
-                     values = c("Attended Christmas party" = 16, 
-                                "Ate donated food"         = 16),
-                     guide  = guide_legend(reverse = TRUE)) +
-
+  plotly::add_markers(data = data_swimlane %>% filter(!is.na(consumed_food_19th)),
+                      x    = ~consumed_food_19th,
+                      y    = ~case_id,
+                      #
+                      marker = list(size = 10, color = "purple"),
+                      #
+                      name      = "Ate donated food",
+                      hoverinfo = "none") %>% 
   #
-  scale_x_date(date_breaks = "3 day",
-               date_labels = "%d-%b") +
-  #
-  coord_cartesian(xlim = c(date_epicurve_start - 4, date_epicurve_end)) +
-  #
-  labs(title = NULL,
-       x     = NULL,
-       y     = NULL) +
-  #
-  theme_classic() +
-  #
-  theme(axis.text   = element_text(size = 9),
-        axis.text.x = element_text(angle = 90,
-                                   vjust = 0.5,
-                                   hjust = 1),
-        #
-        plot.margin = margin(0, 0, 0, 0),
-        #
-        legend.position = "bottom",
-        legend.location = "plot",
-        legend.box      = "horizontal",
-        legend.margin   = margin(),
-        legend.text     = element_text(size = 9),
-        #
-        plot.caption = element_text(hjust = 0))
+  plotly::layout(hovermode = "closest",
+                 #
+                 hoverlabel = list(bgcolor = "#F4FBF3",
+                                   align   = "left"),
+                 #
+                 modebar = list(orientation = 'v'),
+                 #
+                 xaxis = list(title = "",
+                              #
+                              tickformat = "%d-%b",
+                              tickangle  = 270,
+                              ticks      = "outside",
+                              tickvals   = seq(from = date_epicurve_start - 4, to = date_epicurve_end, by = "3 days"),
+                              range      = c(date_epicurve_start - 4, date_epicurve_end),
+                              #
+                              showgrid = FALSE,
+                              showline = TRUE),
+                 #
+                 yaxis = list(title = "",
+                              #
+                              ticks = "outside",
+                              #
+                              categoryorder = "array",
+                              categoryarray = levels(data_swimlane$case_id),
+                              #
+                              showgrid = FALSE,
+                              showline = TRUE),
+                 #
+                 legend = list(orientation = "h", 
+                               xanchor     = "center",
+                               #
+                               x = 0.5, 
+                               y = -0.125))
 ```
 
 *Note:*<br>
