@@ -66,6 +66,10 @@ li > ul {
   margin-bottom: 5pt;
 }
 
+.red-text {
+  color: red;
+}
+
 .callout-note {
   border-left-color: #191D43 !important;
 }

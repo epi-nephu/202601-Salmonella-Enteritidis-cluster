@@ -141,7 +141,7 @@ linelist_clean <- linelist_raw %>%
 knitr::include_graphics(here::here("Images", "nephu_logo.png"))
 ```
 
-# Situation Report [#5]{style="color: red;"}
+# Situation Report [#5]{.red-text}
 
 ## Outbreak {.unnumbered .unlisted}
 
@@ -152,12 +152,12 @@ knitr::include_graphics(here::here("Images", "nephu_logo.png"))
 <div style="height: 0.5em;"></div>
 
 ::: {.incident-table}
-| Incident name             | *Salmonella* Enteritidis cgMLST 3303 cluster |
-|:--------------------------|:---------------------------------------------|
-| PHESS ID                  | 320266203890                                 |
-| Date/time Sit Rep updated | [03/02/2026]{style="color: red;"}            |
-| Sit Rep approved by (IC)  |                                              |
-| Sit Rep prepared by (IO)  | Alana Little                                 |
+| Incident name             | *Salmonella* Enteritidis cgMLST 3303 cluster                      |
+|:--------------------------|:------------------------------------------------------------------|
+| PHESS ID                  | 320266203890                                                      |
+| Date/time Sit Rep updated | [`r format(Sys.Date(), format = "%d/%m/%Y")`]{.red-text}|
+| Sit Rep approved by (IC)  | Claire Gordon                                                     |
+| Sit Rep prepared by (IO)  | Alana Little                                                      |
 
 : {tbl-colwidths="[35,65]"}
 :::
@@ -165,7 +165,11 @@ knitr::include_graphics(here::here("Images", "nephu_logo.png"))
 <div style="height: 1em;"></div>
 
 ::: {.callout-note title="Overall summary of incident" icon=false collapse=false}
-- Cluster of 6x *Salmonella* Enteritidis cgMLST 3303 cases.
+[A cluster of 6x confirmed Salmonella Enteritidis cgMLST 3303 cases has been detected in Victoria, with epidemiological links to a rooming house in Hawthorn (Carrical House) and a construction management company in Altona (Form 700).]{.red-text} 
+
+[Case interviews have identified a potential food source for some of the cases (leftover food from a Christmas party at Form 700 donated to Carrical House). A routine inspection of the catering company who provided the food for the Christmas party identified no food safety or compliance issues. Two of the cases did not have a direct link to the Christmas party but either worked at Form 700 or in a similar industry. No cases detected outside of this. Leading hypothesis is cross contamination, likely from a returned traveller who handled food.]{.red-text} 
+
+[No new cases have been reported since 22/01/2026. and the outbreak was declared closed on 06/02/2026.]{.red-text}
 
 <div style="height: 0.1em;"></div>
 
@@ -173,11 +177,11 @@ knitr::include_graphics(here::here("Images", "nephu_logo.png"))
   - Whole genome sequencing confirmed all 4x isolates are closely related.
   - This cgMLST has not previously been detected in Victoria.
   - A fifth case associated with this cluster was identified on 21/01/2026.
-  - A sixth case likely associated with this cluster (culture positive for Salmonella spp. and epidemiologically linked to a confirmed case) was identified on 22/01/2026.
+  - A sixth case associated with this cluster was identified on 22/01/2026.
 
 <div style="height: 0.1em;"></div>
 
-- 2x confirmed cases reside in WPHU catchment (1x Keilor, 1x Williamstown).
+- 4x confirmed cases reside in NEPHU catchment and 2x confirmed cases reside in WPHU catchment.
 
 <div style="height: 0.1em;"></div>
 
@@ -187,19 +191,24 @@ knitr::include_graphics(here::here("Images", "nephu_logo.png"))
 <div style="height: 0.1em;"></div>
 
 - Potential source is donated food served at Carrical House, Hawthorn on the evening of 19/12/2025.
-  - Donated food sourced from a Christmas party held at Form 700, Altona at lunchtime on 18/12/2025.
-  - 3 out of 5 confirmed cases and 7 out of 8 suspected cases consumed leftovers 
-    - 1x confirmed case works at Form 700, but states that they did not attend the party held at Form 700 on 18/12 or consume any leftovers from the party. Case also stated that they did not recall eating any shared food or leftovers at Form 700.
+  - Donated food sourced from a Christmas party held at Form 700, Altona at lunchtime on [either 18/12/2025 or 19/12/2025.]{.red-text}
+  - 3 out of [6]{.red-text} confirmed cases and [all 7]{.red-text} suspected cases consumed leftovers.
+    - 1x confirmed case works at Form 700, but states that they did not attend the party held at Form 700 or consume any leftovers from the party. Case also stated that they did not recall eating any shared food or leftovers at Form 700.
     - 1x confirmed case has no known association with Carrical House or Form 700.
-    - 1x suspected case is an infant who resides with their parents in staff accommodation at Carrical House and does not consume solid foods. This case likely acquired their infection via secondary household transmission from their brother (Case 3) or father (Case 8).
+    - 1x [confirmed]{.red-text} case is an infant who resides with their parents in staff accommodation at Carrical House and does not consume solid foods. This case likely acquired their infection via secondary household transmission from their brother (Case 3) or father (Case 8).
+
+<div style="height: 0.1em;"></div>
+
+- [Darebin Council conducted a routine inspection of the caterer for the Christmas party on 05/02/2026 with no issues identified.]{.red-text}
+
 :::
 
 <div style="height: 0.125em;"></div>
 
 ::: {.callout-tip title="Outbreak case definitions" icon=false collapse=false}
-**Confirmed case:** Individuals with a positive culture for *Salmonella* Enteritidis cgMLST 3303. 
+**Confirmed case:** Individuals with a positive culture for *Salmonella* Enteritidis cgMLST 3303.
 
-**Suspected case:** Individuals with a clinically compatible illness but no positive test results for *Salmonella* Enteritidis cgMLST 3303 who consumed food from the Form 700 Christmas party (including leftovers) or who have an epidemiological link to a confirmed case. 
+**Suspected case:** Individuals with a clinically compatible illness but no positive test results for *Salmonella* Enteritidis cgMLST 3303 who consumed food from the Form 700 Christmas party (including leftovers) or who have an epidemiological link to a confirmed case.
 :::
 
 ***
@@ -277,13 +286,13 @@ knitr::include_graphics(here::here("Images", "nephu_logo.png"))
   - Does not regularly eat chicken or eggs
   - No recent overseas travel or contact with recently returned travellers
 
-### Suspected Case Details
+<div style="height: 0.1em;"></div>
 
 - **Case 6: 320266209818**
   - 5-month-old female, Hawthorn
   - Symptom onset: 18/01/2026
     - Symptoms: diarrhoea, fever
-  - Faecal culture: *Salmonella spp.* at primary lab 22/01/2026, further identification pending at MDU
+  - Faecal culture: [*Salmonella* Enteritidis cgMLST 3303]{.red-text}
   - Case interview completed 23/01/2026
   - Sibling of Case 3 and child of Case 8
     - Lives full-time with parents in private staff accommodation at Carrical House
@@ -293,7 +302,7 @@ knitr::include_graphics(here::here("Images", "nephu_logo.png"))
     - Twin brother and mother remain well
     - Likely secondary household transmission from brother (Case 3) or father (Case 8)
 
-<div style="height: 0.1em;"></div>
+### Suspected Case Details
 
 - **Case 7: 320266206183**
   - 41-year-old male, Bundoora
@@ -371,7 +380,7 @@ knitr::include_graphics(here::here("Images", "nephu_logo.png"))
 
 #### Figure 1
 
-**Number of people reporting symptoms, by symptom onset date and case classification, [`r datetime_update`]{style="color: red;"}**
+**Number of people reporting symptoms, by symptom onset date and case classification, [`r datetime_update`]{.red-text}**
 
 ```{r}
 #| fig-align: center
@@ -440,7 +449,7 @@ figure %>%
 
 #### Figure 2
 
-**Number of people reporting symptoms, by symptom onset date and association with Carrical House, [`r datetime_update`]{style="color: red;"}**
+**Number of people reporting symptoms, by symptom onset date and association with Carrical House, [`r datetime_update`]{.red-text}**
 
 ```{r}
 #| fig-align: center
@@ -510,7 +519,7 @@ figure %>%
 
 ### Swimlane Plot
 
-**Figure 3. Swimlane plot of confirmed and suspected *Salmonella* Enteritidis cases, [`r datetime_update`]{style="color: red;"}**
+**Figure 3. Swimlane plot of confirmed and suspected *Salmonella* Enteritidis cases, [`r datetime_update`]{.red-text}**
 
 ```{r}
 #
@@ -685,7 +694,7 @@ plotly::plot_ly(height = (80 + dplyr::n_distinct(data_swimlane$case_id) * 50)) %
 
 ### Cluster Diagram
 
-**Figure 4. *Salmonella* Enteritidis cluster diagram, [`r datetime_update`]{style="color: red;"}**
+**Figure 4. *Salmonella* Enteritidis cluster diagram, [`r datetime_update`]{.red-text}**
 
 ```{r}
 #| column: screen-inset-right
@@ -695,14 +704,15 @@ knitr::include_graphics(here::here("Images", "cluster_diagram.png"))
 
 ### Hypotheses on Source or Transmission
 
-- Three out of five confirmed cases linked to Carrical House
-  - 2x resident cases (Case 1 and Case 2), 1x child (Case 3) who lives on-site part-time
+- [Four]{.red-text} out of [six]{.red-text} confirmed cases linked to Carrical House
+  - 2x resident cases (Case 1 and Case 2), 1x child (Case 3) who lives on-site part-time, [1x child (Case 6) who lives on-site full-time]{.red-text}
 
 <div style="height: 0.1em;"></div>
 
-- These three cases all consumed food at a common dinner on 19/12/2025
-  - Leftover food donated by a Carrical House staff member’s son’s (Case 7) work Christmas party at Form 700 on 18/12/2025 was served at Carrical House on 19/12/2025
-  - This was the only common meal shared by all three Carrical House associated confirmed cases
+- [Three of the Carrical House associated cases]{.red-text} consumed food at a common dinner on 19/12/2025
+  - Leftover food donated by a Carrical House staff member’s son’s (Case 7) work Christmas party at Form 700 on [either 18/12/2025 or 19/12/2025 (discrepancy in date of Christmas party from different sources)]{.red-text} was served at Carrical House on 19/12/2025
+  - This was the only common meal shared by [these]{.red-text} confirmed cases
+  - [The fourth confirmed Carrical House associated case is an infant who does not consume solid foods. They likely acquired their infection via secondary household transmission from a family member (Case 7 or Case 8).]{.red-text}
   - Likely temperature abuse of leftovers/donated food
 
 <div style="height: 0.1em;"></div>
@@ -725,10 +735,9 @@ knitr::include_graphics(here::here("Images", "cluster_diagram.png"))
 
 <div style="height: 0.1em;"></div>
 
-- Seven out of eight suspected cases consumed food sourced from the Form 700 Christmas party
+- [All seven]{.red-text} suspected cases consumed food sourced from the Form 700 Christmas party
   - Case 7 attended the Christmas party on 18/12/2025 and ate leftovers at home on 19/12/2025. He dropped food off to Carrical House but did not attend the common dinner at Carrical House on 19/12/2025
   - Cases 8, 9, and 10 attended the common dinner at Carrical House on 19/12/2025
-  - Case 6 is an infant who does not consume solid foods. This case likely acquired their illness via secondary household transmission from their brother (Case 3) or father (Case 8)
 
 ***
 
@@ -834,14 +843,6 @@ knitr::include_graphics(here::here("Images", "cluster_diagram.png"))
 <div style="height: 0.1em;"></div>
 
 - Catered by Zdrava Hrana Catering
-  - Registered with Darebin Council
-  - Regular food suppliers include:
-    - Seafood and pork – Richmond-based wholesaler (name not disclosed)
-    - Chicken – La Ionica, Thomastown
-    - Coles and Woolworths (specific locations not disclosed)
-  - No recent overseas travel by caterer, his wife, or his son-in-law
-  - Most recent travel was to Macedonia two years ago
-  - No recent gastroenteritis among caterer or his family
 
 <div style="height: 0.1em;"></div>
 
@@ -868,11 +869,42 @@ knitr::include_graphics(here::here("Images", "cluster_diagram.png"))
   - No eggs or egg-containing dishes were served
   - Caterer does not typically prepare egg-based dishes
 
+### Zdrava Hrana Catering:
+
+- Registered with Darebin Council
+
+<div style="height: 0.1em;"></div>
+
+- Regular food suppliers include:
+  - Seafood and pork – Richmond-based wholesaler (name not disclosed)
+  - Chicken – La Ionica, Thomastown
+  - Coles and Woolworths (specific locations not disclosed)
+
+<div style="height: 0.1em;"></div>
+
+- No recent overseas travel by caterer, his wife, or his son-in-law
+
+<div style="height: 0.1em;"></div>
+
+- Most recent travel was to Macedonia two years ago
+
+<div style="height: 0.1em;"></div>
+
+- No recent gastroenteritis among caterer or his family
+
+<div style="height: 0.1em;"></div>
+
+- [Darebin Council conducted a routine inspection on 05/02/2026]{.red-text}
+  - [No food safety or compliance issues identified]{.red-text}
+  - [No complex food activities (e.g. raw egg products, undercooked meats)]{.red-text}
+  - [All hot foods fully cooked on-site before being transported to events/venues]{.red-text}
+  - [Hot foods held in warmer at 100° prior to transport, transported using hot boxes, and have temperature checked upon arrival at event/venue]{.red-text}
+
 ***
 
 ## Risk Assessment
 
-- Likely point source outbreak from an item served at the Christmas party on 18/12/2025 and as leftovers on 19/12/2025
+- Likely point source outbreak from an item served at the Christmas party on [either 18/12/2025 or 19/12/2025]{.red-text} and as leftovers on 19/12/2025
   - Likely initial contamination by an unwell or asymptomatic food handler or party attendee at the Christmas party
 
 <div style="height: 0.1em;"></div>
@@ -911,9 +943,5 @@ knitr::include_graphics(here::here("Images", "cluster_diagram.png"))
 
 ## Further Actions Planned
 
-- Await speciation and cgMLST for Case 6.
-
-- NEPHU to contact Darebin Council and request site visit to caterer. 
-
-- Outbreak eligible for closure 01/02/2026 if no further cases.
+- [No further actions required]{.red-text}
 
